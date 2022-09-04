@@ -1,4 +1,4 @@
-
+#![forbid(unsafe_code)]
 use rand::{thread_rng, Rng};
 use vilakuy::IdealAdc;
 
@@ -12,7 +12,6 @@ fn main() {
     //let mut bit_reader = BitReader::new(slice_of_u8);
     //let a_single_bit = bit_reader.read_u8(1).unwrap();
 
-    
     let mut rng: rand::rngs::ThreadRng = thread_rng();
     let num_cases: i32 = 100000;
 

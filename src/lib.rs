@@ -1,5 +1,7 @@
+#![forbid(unsafe_code)]
 use std::{fmt};
 use bitvec::{prelude::*, macros::internal::funty::Fundamental};
+
 pub struct IdealAdc {
     pub bit_depth: u32,
     pub signed: bool,
@@ -17,7 +19,7 @@ impl Default for IdealAdc {
 impl fmt::Display for IdealAdc {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         
-        write!(f, "{} ADC of {} levels ({} bits), MAX: {}, MIN: {}", if self.signed {"signed"} else {"unsigned"}, self.levels(), self.bit_depth, self.max(), self.min())
+        write!(f, "{} ADC of ({} bits), MAX: {}, MIN: {}", if self.signed {"signed"} else {"unsigned"}, self.bit_depth, self.max(), self.min())
     }
 }
 
@@ -84,24 +86,34 @@ impl IdealAdc {
         }
         _bits
     }
-    fn levels(&self) -> u64 {
-        let _option_level: Option<u64> = u64::checked_pow(2, self.bit_depth);
-        match _option_level {
-            Some(level) => level,
-            None => u32::MAX as u64,
-        }
-    }
-    pub fn max(&self) -> i64{
-        let _levels: i64 =(self.levels() as i64).try_into().unwrap();
+    pub fn max(&self) -> i32{
         if self.signed {
-            _levels/2-1
+            let _option_max: Option<i32> = i32::checked_pow(2, self.bit_depth-1);
+            match _option_max {
+                Some(_max) => _max-1,
+                None => i32::MAX,
+            }
         }
         else{
-            _levels-1
+            let _option_max: Option<i32> = i32::checked_pow(2, self.bit_depth);
+            match _option_max {
+                Some(_max) => _max-1,
+                None => i32::MAX
+                ,
+            }
         }
+        
     }
-    pub fn min(&self) -> i64{
-        let _levels: i64 =(self.levels() as i64).try_into().unwrap();
-        self.max()-_levels+1
+    pub fn min(&self) -> i32{
+        if self.signed {
+            let _option_min: Option<i32> = i32::checked_pow(2, self.bit_depth-1);
+            match _option_min {
+                Some(_min) => -_min,
+                None => i32::MIN,
+            }
+        }
+        else{
+            0
+        }
     }
 }
