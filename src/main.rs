@@ -26,7 +26,6 @@ fn main() {
         let signed_adc = IdealAdc{
             bit_depth: random_bit_depth, 
             signed: true,
-            ..Default::default()
         };
         let signed_random_value: f32 = rng.gen_range(signed_adc.min() as f32  ..=signed_adc.max() as f32);
         println!("{}", adc);

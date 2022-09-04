@@ -26,8 +26,8 @@ impl IdealAdc {
         let _sampled: f32 = self._sample(value);
         let _holded: f32 = self._hold(_sampled);
         let _quantitized: i32 = self._quantize(_holded);
-        let _encoded = self._encoder(_quantitized);
-        return _encoded;
+        
+        self._encoder(_quantitized)
     }
     pub fn to_bits_string(&self, value: f32) -> String{
         let _bits = self.to_bits(value);
@@ -38,13 +38,13 @@ impl IdealAdc {
             _bits_string.push_str(_bit_unsigner_integer.to_string().as_str());
         }
         _bits_string.push(']');
-        return _bits_string;
+        _bits_string
     }
     fn _sample(&self, value: f32) -> f32 {
-        return value;
+        value
     }
     fn _hold(&self, value: f32) -> f32 {
-        return value;
+        value
     }
     fn _quantize(&self, value: f32) -> i32 {
         let max = self.max() as f32;
@@ -82,7 +82,7 @@ impl IdealAdc {
                 break;
             }
         }
-        return _bits;
+        _bits
     }
     fn levels(&self) -> u64 {
         let _option_level: Option<u64> = u64::checked_pow(2, self.bit_depth);
@@ -94,19 +94,14 @@ impl IdealAdc {
     pub fn max(&self) -> i64{
         let _levels: i64 =(self.levels() as i64).try_into().unwrap();
         if self.signed {
-            return _levels/2-1;
+            _levels/2-1
         }
         else{
-            return _levels-1;
+            _levels-1
         }
     }
     pub fn min(&self) -> i64{
         let _levels: i64 =(self.levels() as i64).try_into().unwrap();
-        if self.signed {
-            return self.max()-_levels+1;
-        }
-        else{
-            return self.max()-_levels+1;
-        }
+        self.max()-_levels+1
     }
 }
