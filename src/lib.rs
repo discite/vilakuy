@@ -25,30 +25,26 @@ impl fmt::Display for IdealAdc {
 
 impl IdealAdc {
     pub fn to_bits(&self, value: f32) -> Vec<bool>{
-        let _sampled: f32 = self._sample(value);
-        let _holded: f32 = self._hold(_sampled);
-        let _quantitized: i32 = self._quantize(_holded);
+        let quantitized: i32 = self.quantize(value);
         
-        self._encoder(_quantitized)
+        self.encoder(quantitized)
+    }
+    pub fn to_value(&self, bits: Vec<bool>) -> f32 {
+        let decoded = self.decoder(bits);
+        self.continuized(decoded)
     }
     pub fn to_bits_string(&self, value: f32) -> String{
-        let _bits = self.to_bits(value);
-        let mut _bits_string = String::new();
-        _bits_string.push('[');
-        for _bit in _bits {
-            let _bit_unsigner_integer = _bit as u8;
-            _bits_string.push_str(_bit_unsigner_integer.to_string().as_str());
+        let bits = self.to_bits(value);
+        let mut bits_string = String::new();
+        bits_string.push('[');
+        for bit in bits {
+            let bit_unsigner_integer = bit as u8;
+            bits_string.push_str(bit_unsigner_integer.to_string().as_str());
         }
-        _bits_string.push(']');
-        _bits_string
+        bits_string.push(']');
+        bits_string
     }
-    fn _sample(&self, value: f32) -> f32 {
-        value
-    }
-    fn _hold(&self, value: f32) -> f32 {
-        value
-    }
-    fn _quantize(&self, value: f32) -> i32 {
+    fn quantize(&self, value: f32) -> i32 {
         let max = self.max() as f32;
         let min = self.min() as f32;
         if value > max {
@@ -59,7 +55,10 @@ impl IdealAdc {
             value.round() as i32
         }
     }
-    fn _encoder(&self, value: i32) -> Vec<bool> {
+    fn continuized(&self, value: i32) -> f32 {
+        value.as_f32()
+    }
+    fn encoder(&self, value: i32) -> Vec<bool> {
         let _bit_depth_usize = self.bit_depth as usize;
         let mut _bits: Vec<bool> = vec![false;_bit_depth_usize];
         let mut _bit_index: usize = 0;
@@ -86,18 +85,58 @@ impl IdealAdc {
         }
         _bits
     }
+    fn decoder(&self, bits: Vec<bool>) -> i32 {
+        let mut value = 0i32;
+        for bit in &bits {
+            print!("{}",bit.as_u8())
+        }
+        if self.signed {
+            let mut bits_mut = bits;
+            bits_mut.reverse();
+            let option_sign = bits_mut.pop();
+            bits_mut.reverse();
+            let sign: bool = option_sign.unwrap_or(false);
+            for bit in &bits_mut {
+                print!("{}",bit.as_u8())
+            }
+            for (pos, bit) in bits_mut.iter().rev().enumerate() {
+                let option_integ =  i32::checked_pow(2, pos.as_u32());
+                let integ = match option_integ {
+                    Some(integ) => integ,
+                    None => i32::MAX,
+                };
+                println!("{}",bit);
+                if sign {
+                    value += !bit.as_i32() * integ;
+                } else {
+                    value += bit.as_i32() * integ;
+                } 
+            }
+        } else {
+            for (pos, bit) in bits.iter().rev().enumerate() {
+                let option_integ =  i32::checked_pow(2, pos.as_u32());
+                let integ = match option_integ {
+                    Some(integ) => integ,
+                    None => i32::MAX,
+                };
+                value += bit.as_i32() * integ;
+            }
+        }
+        value
+        
+    }
     pub fn max(&self) -> i32{
         if self.signed {
-            let _option_max: Option<i32> = i32::checked_pow(2, self.bit_depth-1);
-            match _option_max {
-                Some(_max) => _max-1,
+            let option_max: Option<i32> = i32::checked_pow(2, self.bit_depth-1);
+            match option_max {
+                Some(max) => max-1,
                 None => i32::MAX,
             }
         }
         else{
-            let _option_max: Option<i32> = i32::checked_pow(2, self.bit_depth);
-            match _option_max {
-                Some(_max) => _max-1,
+            let option_max: Option<i32> = i32::checked_pow(2, self.bit_depth);
+            match option_max {
+                Some(max) => max-1,
                 None => i32::MAX
                 ,
             }
@@ -106,9 +145,9 @@ impl IdealAdc {
     }
     pub fn min(&self) -> i32{
         if self.signed {
-            let _option_min: Option<i32> = i32::checked_pow(2, self.bit_depth-1);
-            match _option_min {
-                Some(_min) => -_min,
+            let option_min: Option<i32> = i32::checked_pow(2, self.bit_depth-1);
+            match option_min {
+                Some(min) => -min,
                 None => i32::MIN,
             }
         }
