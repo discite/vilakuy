@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+use rand::{thread_rng, Rng};
 use vilakuy::IdealAdc;
 
 
@@ -12,7 +13,7 @@ fn main() {
     //let mut bit_reader = BitReader::new(slice_of_u8);
     //let a_single_bit = bit_reader.read_u8(1).unwrap();
 
-    /* let mut rng: rand::rngs::ThreadRng = thread_rng();
+    let mut rng: rand::rngs::ThreadRng = thread_rng();
     let num_cases: i32 = 100000;
 
     for _n in 1..num_cases {
@@ -29,14 +30,10 @@ fn main() {
         let signed_random_value: f32 = rng.gen_range(signed_adc.min() as f32  ..=signed_adc.max() as f32);
         println!("{}", adc);
         println!("the unsigned value {} on bits is {}", unsigned_random_value, adc.to_bits_string(unsigned_random_value));
+        println!("the unsigned value recovered is {}", adc.to_value(adc.to_bits(unsigned_random_value)));
         println!("{}", signed_adc);
         println!("the signed value {} on bits is {}", signed_random_value, signed_adc.to_bits_string(signed_random_value));
-    }  */
-    let adc = IdealAdc{
-        bit_depth: 6, 
-        signed: true,
-    };
-    println!("{}",adc.to_bits_string(12f32));
-    println!("{}",adc.to_value(adc.to_bits(12f32)));
+        println!("the signed value recovered is {}", signed_adc.to_value(signed_adc.to_bits(signed_random_value)));
+    }
 
 }

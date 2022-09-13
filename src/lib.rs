@@ -56,7 +56,7 @@ impl IdealAdc {
         }
     }
     fn continuized(&self, value: i32) -> f32 {
-        value.as_f32()
+        value as f32
     }
     fn encoder(&self, value: i32) -> Vec<bool> {
         let _bit_depth_usize = self.bit_depth as usize;
@@ -87,41 +87,20 @@ impl IdealAdc {
     }
     fn decoder(&self, bits: Vec<bool>) -> i32 {
         let mut value = 0i32;
-        for bit in &bits {
-            print!("{}",bit.as_u8())
-        }
-        if self.signed {
-            let mut bits_mut = bits;
-            bits_mut.reverse();
-            let option_sign = bits_mut.pop();
-            bits_mut.reverse();
-            let sign: bool = option_sign.unwrap_or(false);
-            for bit in &bits_mut {
-                print!("{}",bit.as_u8())
-            }
-            for (pos, bit) in bits_mut.iter().rev().enumerate() {
-                let option_integ =  i32::checked_pow(2, pos.as_u32());
-                let integ = match option_integ {
-                    Some(integ) => integ,
-                    None => i32::MAX,
-                };
-                println!("{}",bit);
-                if sign {
-                    value += !bit.as_i32() * integ;
-                } else {
-                    value += bit.as_i32() * integ;
-                } 
-            }
-        } else {
-            for (pos, bit) in bits.iter().rev().enumerate() {
-                let option_integ =  i32::checked_pow(2, pos.as_u32());
-                let integ = match option_integ {
-                    Some(integ) => integ,
-                    None => i32::MAX,
-                };
+        for (pos, bit) in bits.iter().rev().enumerate() {
+            if *bit {
+                let integ =  i32::checked_pow(2, pos.as_u32()).unwrap_or(i32::MAX);
                 value += bit.as_i32() * integ;
             }
+            
         }
+        if self.signed {
+            let sign = bits.first().unwrap_or(&false);
+            if *sign {
+                let digits =  i32::checked_pow(2, self.bit_depth).unwrap_or(i32::MAX);
+                value = value - digits;
+            }
+        } 
         value
         
     }
