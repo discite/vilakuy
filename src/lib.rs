@@ -5,6 +5,7 @@ use bitvec::{prelude::*, macros::internal::funty::Fundamental};
 pub struct IdealAdc {
     pub bit_depth: u32,
     pub signed: bool,
+    pub normalized: bool,
 }
 
 impl Default for IdealAdc {
@@ -12,6 +13,7 @@ impl Default for IdealAdc {
         IdealAdc {
             bit_depth: 8,
             signed: false,
+            normalized: false,
         }
     }
 }
@@ -24,39 +26,30 @@ impl fmt::Display for IdealAdc {
 }
 
 impl IdealAdc {
-    pub fn to_bits(&self, value: f32) -> Vec<bool>{
-        let quantitized: i32 = self.quantize(value);
-        
-        self.encoder(quantitized)
-    }
-    pub fn to_value(&self, bits: Vec<bool>) -> f32 {
-        let decoded = self.decoder(bits);
-        self.continuized(decoded)
-    }
-    pub fn to_bits_string(&self, value: f32) -> String{
-        let bits = self.to_bits(value);
-        let mut bits_string = String::new();
-        bits_string.push('[');
-        for bit in bits {
-            let bit_unsigner_integer = bit as u8;
-            bits_string.push_str(bit_unsigner_integer.to_string().as_str());
-        }
-        bits_string.push(']');
-        bits_string
-    }
-    fn quantize(&self, value: f32) -> i32 {
+    fn continuized(&self, value: i32) -> f32 {
         let max = self.max() as f32;
         let min = self.min() as f32;
-        if value > max {
-            max.round() as i32
-        } else if value < min {
-            min.round() as i32
+        let mut value_mut = value as f32;
+        if self.normalized {
+            println!("{}", value_mut);
+            value_mut = value_mut / (max-min);
+            println!("{}", value_mut);
+            value_mut
         } else {
-            value.round() as i32
+            value as f32
         }
     }
-    fn continuized(&self, value: i32) -> f32 {
-        value as f32
+    fn decoder(&self, bits: Vec<bool>) -> i32 {
+        let mut value: i32 = 0i32;
+        let sign = *bits.first().unwrap_or(&false);
+        if self.signed && sign {
+            value=!value;
+        }
+        bits.iter().for_each(|&bit| {
+            value <<= 1;
+            value ^= bit.as_i32();
+        });
+        value
     }
     fn encoder(&self, value: i32) -> Vec<bool> {
         let _bit_depth_usize = self.bit_depth as usize;
@@ -85,53 +78,86 @@ impl IdealAdc {
         }
         _bits
     }
-    fn decoder(&self, bits: Vec<bool>) -> i32 {
-        let mut value = 0i32;
-        for (pos, bit) in bits.iter().rev().enumerate() {
-            if *bit {
-                let integ =  i32::checked_pow(2, pos.as_u32()).unwrap_or(i32::MAX);
-                value += bit.as_i32() * integ;
-            }
-            
-        }
-        if self.signed {
-            let sign = bits.first().unwrap_or(&false);
-            if *sign {
-                let digits =  i32::checked_pow(2, self.bit_depth).unwrap_or(i32::MAX);
-                value = value - digits;
-            }
-        } 
-        value
-        
-    }
     pub fn max(&self) -> i32{
+        let max;
         if self.signed {
             let option_max: Option<i32> = i32::checked_pow(2, self.bit_depth-1);
-            match option_max {
+            max = match option_max {
                 Some(max) => max-1,
                 None => i32::MAX,
-            }
+            };
+            max
         }
         else{
             let option_max: Option<i32> = i32::checked_pow(2, self.bit_depth);
-            match option_max {
+            max = match option_max {
                 Some(max) => max-1,
-                None => i32::MAX
-                ,
-            }
+                None => i32::MAX,
+            };
+            max
         }
-        
     }
     pub fn min(&self) -> i32{
+        let min: i32;
         if self.signed {
             let option_min: Option<i32> = i32::checked_pow(2, self.bit_depth-1);
-            match option_min {
+            min = match option_min {
                 Some(min) => -min,
                 None => i32::MIN,
-            }
+            };
+            min
         }
         else{
             0
         }
+    }
+    fn quantize(&self, value: f32) -> i32 {
+        let max = self.max() as f32;
+        let min = self.min() as f32;
+        let mut value_mut = value;
+
+        if self.normalized {
+            let max_normalize:f32 = 1.0;
+            let min_normalize:f32 = if self.signed { -1.0 } else { 0.0 };
+            if value_mut > max_normalize {
+                value_mut = max_normalize;
+            } else if value_mut < min_normalize {
+                value_mut = min_normalize;
+            }
+        } 
+
+        if value_mut > max {
+            max.round() as i32
+        } else if value_mut < min {
+            min.round() as i32
+        } else {
+            if self.normalized {
+                value_mut = value_mut * (max-min);
+                value_mut = value_mut.round();
+                value_mut as i32
+            } else {
+                value_mut.round() as i32
+            }
+        }
+    }
+    pub fn to_bits(&self, value: f32) -> Vec<bool>{
+        let quantitized: i32 = self.quantize(value);
+        
+        self.encoder(quantitized)
+    }
+    pub fn to_bits_string(&self, value: f32) -> String{
+        let bits = self.to_bits(value);
+        let mut bits_string = String::new();
+        bits_string.push('[');
+        for bit in bits {
+            let bit_unsigner_integer = bit as u8;
+            bits_string.push_str(bit_unsigner_integer.to_string().as_str());
+        }
+        bits_string.push(']');
+        bits_string
+    }
+    pub fn to_value(&self, bits: Vec<bool>) -> f32 {
+        let decoded = self.decoder(bits);
+        self.continuized(decoded)
     }
 }
