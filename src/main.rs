@@ -7,7 +7,7 @@ use vilakuy::IdealAdc;
 
 fn main() {
 
-/*     let mut rng: rand::rngs::ThreadRng = thread_rng();
+    let mut rng: rand::rngs::ThreadRng = thread_rng();
     let num_cases: i32 = 100;
 
     for _n in 1..num_cases {
@@ -30,8 +30,8 @@ fn main() {
         println!("{}", signed_adc);
         println!("the signed value {} on bits is {}", signed_random_value, signed_adc.to_bits_string(signed_random_value));
         println!("the signed value recovered is {}", signed_adc.to_value(signed_adc.to_bits(signed_random_value)));
-    } */
-    let signed_adc = IdealAdc{
+    }
+/*     let signed_adc = IdealAdc{
         bit_depth: 12, 
         signed: true,
         normalized: true,
@@ -39,6 +39,6 @@ fn main() {
     let value_test = -0.67;
     println!("{}", signed_adc);
     println!("the signed value {} on bits is {}", value_test, signed_adc.to_bits_string(value_test));
-    println!("the signed value recovered is {}", signed_adc.to_value(signed_adc.to_bits(value_test)));
+    println!("the signed value recovered is {}", signed_adc.to_value(signed_adc.to_bits(value_test))); */
  
 }
