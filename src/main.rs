@@ -8,7 +8,7 @@ use vilakuy::IdealAdc;
 fn main() {
 
     let mut rng: rand::rngs::ThreadRng = thread_rng();
-    let num_cases: i32 = 100;
+    let num_cases: i32 = 100000;
 
     for _n in 1..num_cases {
         let random_bit_depth: u32 = rng.gen_range(1..=32);
